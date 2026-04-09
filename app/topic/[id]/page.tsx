@@ -14,7 +14,10 @@ export default function TopicPage() {
   const topicId = Number(params.id);
   
   const topic = dailyIssues.find((t) => t.id === topicId) || dailyIssues[0];
-  
+  const topicColorIndex = dailyIssues.findIndex((t) => t.id === topicId);
+  const postItColors = ["post-it-yellow", "post-it-pink", "post-it-blue", "post-it-green", "post-it-orange"];
+  const topicColor = postItColors[topicColorIndex >= 0 ? topicColorIndex : 0];
+
   const [opinions, setOpinions] = useState<Opinion[]>(
     mockOpinions.filter((o) => o.topicId === topicId || topicId === 1)
   );
@@ -90,8 +93,8 @@ export default function TopicPage() {
 
         {/* Topic Title - Post-it style */}
         <div className="flex justify-center mb-8">
-          <div 
-            className="post-it post-it-yellow w-full max-w-2xl p-6"
+          <div
+            className={cn("post-it w-full max-w-2xl p-6", topicColor)}
             style={{ transform: "rotate(-1deg)" }}
           >
             <h1 className="text-2xl font-bold text-center text-gray-800 leading-relaxed">
