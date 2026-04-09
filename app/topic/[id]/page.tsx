@@ -19,6 +19,7 @@ export default function TopicPage() {
     mockOpinions.filter((o) => o.topicId === topicId || topicId === 1)
   );
   const [selectedOpinion, setSelectedOpinion] = useState<Opinion | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string>("post-it-yellow");
   const [showWriteModal, setShowWriteModal] = useState(false);
   const [sort, setSort] = useState<SortType>("latest");
   const [newComment, setNewComment] = useState("");
@@ -41,8 +42,11 @@ export default function TopicPage() {
     return sorted;
   }, [opinions, sort]);
 
-  const handleSelectOpinion = (opinion: Opinion) => {
+  const colors = ["post-it-yellow", "post-it-pink", "post-it-blue", "post-it-green", "post-it-orange"];
+
+  const handleSelectOpinion = (opinion: Opinion, index: number) => {
     setSelectedOpinion(opinion);
+    setSelectedColor(colors[index % colors.length]);
   };
 
   const handleWriteOpinion = (summary: string, content: string) => {
@@ -131,12 +135,11 @@ export default function TopicPage() {
             {/* Opinion Cards */}
             <div className="flex-1 overflow-y-auto space-y-4 pr-2">
               {sortedOpinions.map((opinion, index) => {
-                const colors = ["post-it-yellow", "post-it-pink", "post-it-blue", "post-it-green", "post-it-orange"];
                 const rotations = [-2, 1, -1, 2, -1.5];
                 return (
                   <div
                     key={opinion.id}
-                    onClick={() => handleSelectOpinion(opinion)}
+                    onClick={() => handleSelectOpinion(opinion, index)}
                     className={cn(
                       "post-it cursor-pointer transition-all hover:scale-[1.02]",
                       colors[index % colors.length],
@@ -178,7 +181,7 @@ export default function TopicPage() {
           {/* Right: Opinion Detail */}
           <div className="w-1/2 flex flex-col">
             {selectedOpinion ? (
-              <div className="post-it post-it-yellow flex-1 overflow-y-auto" style={{ transform: "rotate(0.5deg)" }}>
+              <div className={cn("post-it flex-1 overflow-y-auto", selectedColor)} style={{ transform: "rotate(0.5deg)" }}>
                 <div className="p-2">
                   {/* Summary */}
                   <h2 className="text-xl font-bold text-gray-800 mb-4 pb-3 border-b-2 border-gray-300 border-dashed">
