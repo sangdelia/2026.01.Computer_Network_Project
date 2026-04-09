@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
+import { execute } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const orderBy = sort === "popular" ? "o.agree_count DESC" : "o.created_at DESC";
 
-  const [rows] = await pool.execute(
+  const [rows] = await execute(
     `SELECT o.id, o.summary, u.nickname AS authorNickname,
             o.agree_count AS agreeCount, o.disagree_count AS disagreeCount,
             o.comment_count AS commentCount, o.created_at AS createdAt
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: { code: "INVALID_CONTENT_LENGTH", message: "전문은 50~5000자여야 합니다." } }, { status: 400 });
   }
 
-  const [result] = await pool.execute(
+  const [result] = await execute(
     "INSERT INTO opinions (topic_id, author_id, summary, content) VALUES (?, ?, ?, ?)",
     [topicId, authorId, summary, content]
   ) as any;

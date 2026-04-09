@@ -6,9 +6,19 @@ const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  charset: "utf8mb4",
   waitForConnections: true,
   connectionLimit: 10,
 });
+
+export async function execute(sql: string, values?: any[]) {
+  const conn = await pool.getConnection();
+  try {
+    await conn.query("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+    const result = await conn.execute(sql, values);
+    return result;
+  } finally {
+    conn.release();
+  }
+}
 
 export default pool;
