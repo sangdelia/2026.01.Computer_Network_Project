@@ -1,0 +1,43 @@
+import { NextRequest, NextResponse } from "next/server";
+import pool from "@/lib/db";
+
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const opinionId = Number(id);
+
+  const [rows] = await pool.execute(
+    `SELECT c.id, c.content, u.nickname AS authorNickname, c.author_id AS authorId, c.created_at AS createdAt
+     FROM comments c
+     JOIN users u ON c.author_id = u.id
+     WHERE c.opinion_id = ?
+     ORDER BY c.created_at ASC`,
+    [opinionId]
+  );
+
+  return NextResponse.json({ success: true, data: rows });
+}
+
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const opinionId = Number(id);
+  const { userId, content } = await req.json();
+
+  if (!content || content.trim().length === 0) {
+    return NextResponse.json({ success: false, error: { code: "BLANK_COMMENT", message: "댓글 내용을 입력해주세요." } }, { status: 400 });
+  }
+  if (content.length > 500) {
+    return NextResponse.json({ success: false, error: { code: "INVALID_COMMENT_LENGTH", message: "댓글은 500자 이하여야 합니다." } }, { status: 400 });
+  }
+
+  const [result] = await pool.execute(
+    "INSERT INTO comments (opinion_id, author_id, content) VALUES (?, ?, ?)",
+    [opinionId, userId, content.trim()]
+  ) as any;
+
+  await pool.execute(
+    "UPDATE opinions SET comment_count = comment_count + 1 WHERE id = ?",
+    [opinionId]
+  );
+
+  return NextResponse.json({ success: true, data: { id: result.insertId } }, { status: 201 });
+}
