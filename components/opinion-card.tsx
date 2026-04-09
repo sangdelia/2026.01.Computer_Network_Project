@@ -3,6 +3,7 @@
 import { Opinion } from "@/lib/types";
 import { formatRelativeTime, calculateAgreeRate, cn } from "@/lib/utils";
 import { ThumbsUp, MessageCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface OpinionCardProps {
   opinion: Opinion;
@@ -11,6 +12,13 @@ interface OpinionCardProps {
 
 export function OpinionCard({ opinion, onClick }: OpinionCardProps) {
   const agreeRate = calculateAgreeRate(opinion.agreeCount, opinion.disagreeCount);
+  const [relativeTime, setRelativeTime] = useState<string>("");
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setRelativeTime(formatRelativeTime(opinion.createdAt));
+    setIsHydrated(true);
+  }, [opinion.createdAt]);
 
   return (
     <article
@@ -24,7 +32,9 @@ export function OpinionCard({ opinion, onClick }: OpinionCardProps) {
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
         <span className="font-medium">{opinion.authorNickname}</span>
         <span className="text-border">|</span>
-        <span>{formatRelativeTime(opinion.createdAt)}</span>
+        <span suppressHydrationWarning>
+          {isHydrated ? relativeTime : "로딩 중..."}
+        </span>
         
         <div className="ml-auto flex items-center gap-4">
           <div className="flex items-center gap-1.5">
