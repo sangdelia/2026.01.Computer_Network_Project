@@ -33,8 +33,8 @@
     /* Chalkboard colors */
     --chalkboard: 150 30% 18%;
     --chalkboard-dark: 150 35% 12%;
-    --chalk: 45 30% 90%;
-    --chalk-dim: 45 20% 70%;
+    --chalk: 0 0% 95%;
+    --chalk-dim: 0 0% 75%;
   }
 
   .dark {
@@ -65,8 +65,8 @@
 
     --chalkboard: 150 30% 18%;
     --chalkboard-dark: 150 35% 12%;
-    --chalk: 45 30% 90%;
-    --chalk-dim: 45 20% 70%;
+    --chalk: 0 0% 95%;
+    --chalk-dim: 0 0% 75%;
   }
 }
 
