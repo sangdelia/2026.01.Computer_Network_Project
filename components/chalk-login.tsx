@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 interface ChalkLoginProps {
   onLogin: (username: string, password: string) => void;
@@ -31,7 +32,7 @@ export function ChalkLogin({ onLogin }: ChalkLoginProps) {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="chalk-input"
-            placeholder="아이디 입력"
+            placeholder="Enter ID"
           />
         </div>
         
@@ -42,7 +43,7 @@ export function ChalkLogin({ onLogin }: ChalkLoginProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="chalk-input"
-            placeholder="비밀번호 입력"
+            placeholder="Enter Password"
           />
         </div>
         
@@ -50,9 +51,12 @@ export function ChalkLogin({ onLogin }: ChalkLoginProps) {
           Enter
         </button>
         
-        <div className="chalk-text-dim text-sm text-center mt-2 opacity-60">
-          * 처음이라면 회원가입 *
-        </div>
+        <Link 
+          href="/signup"
+          className="chalk-text-dim text-sm text-center mt-2 block hover:opacity-100 opacity-60 transition-opacity underline"
+        >
+          * New here? Sign up *
+        </Link>
       </form>
     </div>
   );
