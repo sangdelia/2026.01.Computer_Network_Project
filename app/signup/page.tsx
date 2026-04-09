@@ -23,14 +23,34 @@ export default function SignupPage() {
 
   const isValid = Object.values(validations).every(Boolean);
 
+  const [errorMsg, setErrorMsg] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
 
     setIsSubmitting(true);
-    // Mock signup - in real app, this would call an API
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    router.push("/");
+    setErrorMsg("");
+
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: formData.username,
+        password: formData.password,
+        nickname: formData.nickname,
+      }),
+    });
+
+    const { success, data, error } = await res.json();
+    setIsSubmitting(false);
+
+    if (success) {
+      localStorage.setItem("user", JSON.stringify(data));
+      router.push("/");
+    } else {
+      setErrorMsg(error?.message ?? "회원가입에 실패했습니다.");
+    }
   };
 
   const ValidationIcon = ({ valid }: { valid: boolean }) => (
@@ -135,6 +155,11 @@ export default function SignupPage() {
                 * 2~10 characters
               </p>
             </div>
+
+            {/* Error Message */}
+            {errorMsg && (
+              <p className="chalk-text text-base text-red-300 text-center">{errorMsg}</p>
+            )}
 
             {/* Submit Button */}
             <div className="pt-4">

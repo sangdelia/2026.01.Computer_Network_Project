@@ -6,9 +6,12 @@ import { Opinion, Comment, SortType } from "@/lib/types";
 import { ArrowLeft, ThumbsUp, ThumbsDown, MessageCircle, Send, Pencil } from "lucide-react";
 import { formatRelativeTime, calculateAgreeRate, cn } from "@/lib/utils";
 
-// 인증 구현 전 임시 사용자 (TODO: 로그인 연동 후 교체)
-const TEMP_USER_ID = 1;
-const TEMP_USER_NICKNAME = "테스트유저";
+// localStorage에서 로그인 유저 읽기
+function getStoredUser(): { id: number; nickname: string } | null {
+  if (typeof window === "undefined") return null;
+  const stored = localStorage.getItem("user");
+  return stored ? JSON.parse(stored) : null;
+}
 
 const POST_IT_COLORS = ["post-it-yellow", "post-it-pink", "post-it-blue", "post-it-green", "post-it-orange"];
 const ROTATIONS = [-2, 1, -1, 2, -1.5];
@@ -18,6 +21,7 @@ export default function TopicPage() {
   const router = useRouter();
   const topicId = Number(params.id);
 
+  const [currentUser, setCurrentUser] = useState<{ id: number; nickname: string } | null>(null);
   const [topicTitle, setTopicTitle] = useState("");
   const [topicColorIndex, setTopicColorIndex] = useState(0);
   const [opinions, setOpinions] = useState<Opinion[]>([]);
@@ -29,7 +33,10 @@ export default function TopicPage() {
   const [sort, setSort] = useState<SortType>("latest");
   const [isHydrated, setIsHydrated] = useState(false);
 
-  useEffect(() => { setIsHydrated(true); }, []);
+  useEffect(() => {
+    setIsHydrated(true);
+    setCurrentUser(getStoredUser());
+  }, []);
 
   // 주제 정보 + 색상 인덱스
   useEffect(() => {
@@ -80,11 +87,11 @@ export default function TopicPage() {
 
   // 반응 (공감/비공감)
   const handleReact = async (type: "AGREE" | "DISAGREE") => {
-    if (!selectedOpinion) return;
+    if (!selectedOpinion || !currentUser) return;
     const res = await fetch(`/api/opinions/${selectedOpinion.id}/reactions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: TEMP_USER_ID, type }),
+      body: JSON.stringify({ userId: currentUser.id, type }),
     });
     const { data } = await res.json();
     if (data) {
@@ -95,11 +102,11 @@ export default function TopicPage() {
 
   // 댓글 제출
   const handleSubmitComment = async () => {
-    if (!selectedOpinion || !newComment.trim()) return;
+    if (!selectedOpinion || !newComment.trim() || !currentUser) return;
     const res = await fetch(`/api/opinions/${selectedOpinion.id}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: TEMP_USER_ID, content: newComment }),
+      body: JSON.stringify({ userId: currentUser.id, content: newComment }),
     });
     if (res.ok) {
       setNewComment("");
@@ -111,10 +118,11 @@ export default function TopicPage() {
 
   // 의견 작성
   const handleWriteOpinion = async (summary: string, content: string) => {
+    if (!currentUser) return;
     const res = await fetch("/api/opinions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topicId, authorId: TEMP_USER_ID, summary, content }),
+      body: JSON.stringify({ topicId, authorId: currentUser.id, summary, content }),
     });
     if (res.ok) {
       setShowWriteModal(false);
