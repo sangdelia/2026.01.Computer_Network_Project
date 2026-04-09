@@ -1,95 +1,101 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Opinion, SortType } from "@/lib/types";
-import { mockTopic, mockOpinions } from "@/lib/mock-data";
-import { TopicHeader } from "@/components/topic-header";
-import { SortTab } from "@/components/sort-tab";
-import { OpinionList } from "@/components/opinion-list";
-import { WriteButton } from "@/components/write-button";
-import { OpinionDetail } from "@/components/opinion-detail";
-import { WriteModal } from "@/components/write-modal";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { PostIt } from "@/components/post-it";
+import { ChalkLogin } from "@/components/chalk-login";
+import { dailyIssues, issueOpinionCounts } from "@/lib/mock-data";
+
+const postItColors: Array<"yellow" | "pink" | "blue" | "green" | "orange"> = [
+  "yellow",
+  "pink",
+  "blue",
+  "green",
+  "orange",
+];
+
+const postItRotations = [-3, 2, -1, 3, -2];
 
 export default function Home() {
-  const [opinions, setOpinions] = useState<Opinion[]>(mockOpinions);
-  const [selectedOpinion, setSelectedOpinion] = useState<Opinion | null>(null);
-  const [showWriteModal, setShowWriteModal] = useState(false);
-  const [sort, setSort] = useState<SortType>("latest");
+  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
 
-  const sortedOpinions = useMemo(() => {
-    const sorted = [...opinions];
-    if (sort === "latest") {
-      sorted.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    } else {
-      sorted.sort((a, b) => b.agreeCount - a.agreeCount);
-    }
-    return sorted;
-  }, [opinions, sort]);
-
-  const handleSelectOpinion = (opinion: Opinion) => {
-    setSelectedOpinion(opinion);
+  const handleLogin = (username: string, password: string) => {
+    // Mock login
+    setIsLoggedIn(true);
+    setCurrentUser(username);
   };
 
-  const handleBackToList = () => {
-    setSelectedOpinion(null);
+  const handleTopicClick = (topicId: number) => {
+    router.push(`/topic/${topicId}`);
   };
 
-  const handleWriteOpinion = (summary: string, content: string) => {
-    const newOpinion: Opinion = {
-      id: Date.now(),
-      topicId: mockTopic.id,
-      authorId: 3, // Mock 현재 사용자
-      authorNickname: "나",
-      summary,
-      content,
-      agreeCount: 0,
-      disagreeCount: 0,
-      commentCount: 0,
-      myReaction: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setOpinions((prev) => [newOpinion, ...prev]);
-    setShowWriteModal(false);
-  };
-
-  // 상세 화면 표시
-  if (selectedOpinion) {
-    return (
-      <OpinionDetail opinion={selectedOpinion} onBack={handleBackToList} />
-    );
-  }
-
-  // 목록 화면
   return (
-    <div className="min-h-screen bg-background">
-      <TopicHeader topic={mockTopic} />
+    <div className="min-h-screen chalkboard wooden-frame relative overflow-hidden">
+      {/* Header - Chalk Title */}
+      <header className="pt-12 pb-8 text-center relative z-10">
+        <h1 className="chalk-text text-6xl font-bold tracking-wide">
+          Daily Issues
+        </h1>
+        <p className="chalk-text-dim text-2xl mt-4">
+          - 오늘의 토론 주제 -
+        </p>
+        <div className="chalk-text-dim text-lg mt-2 opacity-60">
+          2026년 4월 9일
+        </div>
+      </header>
 
-      <main className="mx-auto max-w-3xl">
-        <SortTab
-          sort={sort}
-          onChange={setSort}
-          totalCount={opinions.length}
-        />
-
-        <OpinionList
-          opinions={sortedOpinions}
-          onSelectOpinion={handleSelectOpinion}
-        />
+      {/* Post-it Notes Grid */}
+      <main className="flex justify-center items-center py-8 px-4 relative z-10">
+        <div className="flex flex-wrap justify-center gap-8 max-w-4xl">
+          {dailyIssues.map((issue, index) => (
+            <PostIt
+              key={issue.id}
+              title={issue.title}
+              opinionCount={issueOpinionCounts[issue.id] || 0}
+              color={postItColors[index % postItColors.length]}
+              rotation={postItRotations[index % postItRotations.length]}
+              onClick={() => handleTopicClick(issue.id)}
+            />
+          ))}
+        </div>
       </main>
 
-      <WriteButton onClick={() => setShowWriteModal(true)} />
+      {/* Chalk drawings decoration */}
+      <div className="absolute top-20 left-8 chalk-text-dim text-4xl opacity-30 rotate-12">
+        *
+      </div>
+      <div className="absolute top-40 right-16 chalk-text-dim text-3xl opacity-20 -rotate-6">
+        ~
+      </div>
+      <div className="absolute bottom-40 left-16 chalk-text-dim text-5xl opacity-25 rotate-45">
+        +
+      </div>
 
-      {showWriteModal && (
-        <WriteModal
-          topicTitle={mockTopic.title}
-          onClose={() => setShowWriteModal(false)}
-          onSubmit={handleWriteOpinion}
-        />
+      {/* Login Section - Bottom Right */}
+      {!isLoggedIn ? (
+        <ChalkLogin onLogin={handleLogin} />
+      ) : (
+        <div className="absolute bottom-8 right-8 chalk-text text-xl">
+          <p className="mb-2">Welcome, {currentUser}!</p>
+          <button 
+            onClick={() => {
+              setIsLoggedIn(false);
+              setCurrentUser(null);
+            }}
+            className="chalk-button text-base"
+          >
+            Logout
+          </button>
+        </div>
       )}
+
+      {/* Instructions - Bottom Left */}
+      <div className="absolute bottom-8 left-8 chalk-text-dim text-lg opacity-70 max-w-xs">
+        <p>* 포스트잇을 클릭하면</p>
+        <p className="ml-4">토론에 참여할 수 있습니다</p>
+      </div>
     </div>
   );
 }

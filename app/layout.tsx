@@ -1,10 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans_KR } from "next/font/google";
+import { Noto_Sans_KR, Caveat } from "next/font/google";
 import "./globals.css";
 
 const notoSansKR = Noto_Sans_KR({
   subsets: ["latin"],
   variable: "--font-pretendard",
+  weight: ["400", "500", "600", "700"],
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  variable: "--font-caveat",
   weight: ["400", "500", "600", "700"],
 });
 
@@ -27,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className={`${notoSansKR.variable} font-sans antialiased`}>
+      <body className={`${notoSansKR.variable} ${caveat.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>

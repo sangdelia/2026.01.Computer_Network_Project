@@ -1,10 +1,42 @@
 import { Topic, Opinion, Comment } from "./types";
 
-export const mockTopic: Topic = {
-  id: 1,
-  title: "대학 등록금은 인하되어야 하는가?",
-  createdAt: "2026-04-01T09:00:00Z",
+export const dailyIssues: Topic[] = [
+  {
+    id: 1,
+    title: "대학 등록금은 인하되어야 하는가?",
+    createdAt: "2026-04-09T09:00:00Z",
+  },
+  {
+    id: 2,
+    title: "AI가 인간의 일자리를 대체해도 괜찮은가?",
+    createdAt: "2026-04-09T09:00:00Z",
+  },
+  {
+    id: 3,
+    title: "SNS 실명제를 도입해야 하는가?",
+    createdAt: "2026-04-09T09:00:00Z",
+  },
+  {
+    id: 4,
+    title: "군 복무 기간을 단축해야 하는가?",
+    createdAt: "2026-04-09T09:00:00Z",
+  },
+  {
+    id: 5,
+    title: "대학 입시에서 수능의 비중을 줄여야 하는가?",
+    createdAt: "2026-04-09T09:00:00Z",
+  },
+];
+
+export const issueOpinionCounts: Record<number, number> = {
+  1: 5,
+  2: 12,
+  3: 8,
+  4: 15,
+  5: 3,
 };
+
+export const mockTopic: Topic = dailyIssues[0];
 
 export const mockOpinions: Opinion[] = [
   {
