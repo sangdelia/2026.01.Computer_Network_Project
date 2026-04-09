@@ -47,16 +47,16 @@ export default function SignupPage() {
         {/* Back Button */}
         <button
           onClick={() => router.push("/")}
-          className="chalk-text flex items-center gap-2 text-xl hover:opacity-80 transition-opacity mb-8"
+          className="chalk-text flex items-center gap-2 text-2xl hover:opacity-80 transition-opacity mb-8 font-medium"
         >
-          <ArrowLeft className="h-6 w-6" />
+          <ArrowLeft className="h-7 w-7" />
           <span>Back to Board</span>
         </button>
 
         {/* Title */}
         <div className="text-center mb-12">
-          <h1 className="chalk-text text-5xl mb-4">- Sign Up -</h1>
-          <p className="chalk-text-dim text-xl">Join the discussion!</p>
+          <h1 className="chalk-text text-6xl mb-4 font-bold">- Sign Up -</h1>
+          <p className="chalk-text text-2xl">Join the discussion!</p>
         </div>
 
         {/* Form - Chalk style */}
@@ -65,7 +65,7 @@ export default function SignupPage() {
             {/* Username */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="chalk-text text-xl">ID (Username)</label>
+                <label className="chalk-text text-2xl font-medium">ID (Username)</label>
                 {formData.username && <ValidationIcon valid={validations.username} />}
               </div>
               <input
@@ -75,7 +75,7 @@ export default function SignupPage() {
                 className="chalk-input text-2xl"
                 placeholder="4-20 characters"
               />
-              <p className="chalk-text-dim text-sm opacity-60">
+              <p className="chalk-text text-base opacity-60">
                 * 4~20 characters, alphanumeric only
               </p>
             </div>
@@ -83,7 +83,7 @@ export default function SignupPage() {
             {/* Password */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="chalk-text text-xl">Password</label>
+                <label className="chalk-text text-2xl font-medium">Password</label>
                 {formData.password && <ValidationIcon valid={validations.password} />}
               </div>
               <input
@@ -93,7 +93,7 @@ export default function SignupPage() {
                 className="chalk-input text-2xl"
                 placeholder="********"
               />
-              <p className="chalk-text-dim text-sm opacity-60">
+              <p className="chalk-text text-base opacity-60">
                 * At least 8 characters
               </p>
             </div>
@@ -101,7 +101,7 @@ export default function SignupPage() {
             {/* Confirm Password */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="chalk-text text-xl">Confirm PW</label>
+                <label className="chalk-text text-2xl font-medium">Confirm PW</label>
                 {formData.confirmPassword && <ValidationIcon valid={validations.confirmPassword} />}
               </div>
               <input
@@ -112,7 +112,7 @@ export default function SignupPage() {
                 placeholder="********"
               />
               {formData.confirmPassword && !validations.confirmPassword && (
-                <p className="chalk-text text-sm text-red-400">
+                <p className="chalk-text text-base text-red-300">
                   Passwords do not match
                 </p>
               )}
@@ -121,7 +121,7 @@ export default function SignupPage() {
             {/* Nickname */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="chalk-text text-xl">Nickname</label>
+                <label className="chalk-text text-2xl font-medium">Nickname</label>
                 {formData.nickname && <ValidationIcon valid={validations.nickname} />}
               </div>
               <input
@@ -131,7 +131,7 @@ export default function SignupPage() {
                 className="chalk-input text-2xl"
                 placeholder="Your display name"
               />
-              <p className="chalk-text-dim text-sm opacity-60">
+              <p className="chalk-text text-base opacity-60">
                 * 2~10 characters
               </p>
             </div>
@@ -149,12 +149,12 @@ export default function SignupPage() {
 
             {/* Login Link */}
             <div className="text-center pt-4">
-              <p className="chalk-text-dim text-lg">
+              <p className="chalk-text text-xl">
                 Already have an account?{" "}
                 <button
                   type="button"
                   onClick={() => router.push("/")}
-                  className="chalk-text underline hover:opacity-80"
+                  className="chalk-text underline hover:opacity-80 font-medium"
                 >
                   Login here
                 </button>
@@ -164,9 +164,9 @@ export default function SignupPage() {
 
           {/* Decorative doodles */}
           <div className="mt-12 flex justify-center gap-8">
-            <div className="chalk-text-dim text-4xl opacity-30">~</div>
-            <div className="chalk-text-dim text-4xl opacity-30">*</div>
-            <div className="chalk-text-dim text-4xl opacity-30">~</div>
+            <div className="chalk-text text-4xl opacity-30">~</div>
+            <div className="chalk-text text-4xl opacity-30">*</div>
+            <div className="chalk-text text-4xl opacity-30">~</div>
           </div>
         </div>
       </div>

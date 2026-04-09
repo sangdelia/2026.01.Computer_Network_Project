@@ -71,13 +71,13 @@ export default function TopicPage() {
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => router.push("/")}
-            className="chalk-text flex items-center gap-2 text-xl hover:opacity-80 transition-opacity"
+            className="chalk-text flex items-center gap-2 text-2xl hover:opacity-80 transition-opacity font-medium"
           >
-            <ArrowLeft className="h-6 w-6" />
+            <ArrowLeft className="h-7 w-7" />
             <span>Back to Board</span>
           </button>
           
-          <div className="chalk-text text-3xl text-center flex-1">
+          <div className="chalk-text text-4xl text-center flex-1 font-bold">
             - Daily Issue #{topicId} -
           </div>
           
@@ -108,8 +108,8 @@ export default function TopicPage() {
               <button
                 onClick={() => setSort("latest")}
                 className={cn(
-                  "chalk-text text-lg transition-opacity",
-                  sort === "latest" ? "opacity-100" : "opacity-50 hover:opacity-75"
+                  "chalk-text text-xl font-medium transition-opacity",
+                  sort === "latest" ? "opacity-100" : "opacity-60 hover:opacity-80"
                 )}
               >
                 [ Latest ]
@@ -117,13 +117,13 @@ export default function TopicPage() {
               <button
                 onClick={() => setSort("popular")}
                 className={cn(
-                  "chalk-text text-lg transition-opacity",
-                  sort === "popular" ? "opacity-100" : "opacity-50 hover:opacity-75"
+                  "chalk-text text-xl font-medium transition-opacity",
+                  sort === "popular" ? "opacity-100" : "opacity-60 hover:opacity-80"
                 )}
               >
                 [ Popular ]
               </button>
-              <span className="chalk-text-dim text-lg ml-auto">
+              <span className="chalk-text text-xl ml-auto font-medium">
                 Total: {opinions.length}
               </span>
             </div>
@@ -255,8 +255,8 @@ export default function TopicPage() {
             ) : (
               <div className="flex-1 flex items-center justify-center">
                 <div className="chalk-text text-center">
-                  <p className="text-2xl mb-2">Select an opinion</p>
-                  <p className="chalk-text-dim text-lg">Click on a post-it to see details</p>
+                  <p className="text-3xl mb-3 font-bold">Select an opinion</p>
+                  <p className="chalk-text text-xl opacity-70">Click on a post-it to see details</p>
                 </div>
               </div>
             )}
