@@ -123,7 +123,64 @@
   border-radius: 4px;
 }
 
+/* Chalkboard inner with padding */
+.chalkboard-inner {
+  background: transparent;
+}
+
 /* Post-it note styles */
+.post-it {
+  position: relative;
+  padding: 1.25rem;
+  box-shadow: 
+    2px 2px 7px rgba(0, 0, 0, 0.15),
+    -1px -1px 3px rgba(255, 255, 255, 0.1) inset;
+  transform-origin: center top;
+  transition: all 0.2s ease;
+  border-radius: 2px;
+}
+
+.post-it::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 0 0 3px 3px;
+}
+
+.post-it:hover {
+  box-shadow: 
+    4px 4px 12px rgba(0, 0, 0, 0.25),
+    -1px -1px 3px rgba(255, 255, 255, 0.1) inset;
+  z-index: 10;
+}
+
+/* Post-it colors with strong backgrounds */
+.post-it-yellow {
+  background: linear-gradient(135deg, #ffeb3b 0%, #fdd835 100%);
+}
+
+.post-it-pink {
+  background: linear-gradient(135deg, #ffc0cb 0%, #ffb3c1 100%);
+}
+
+.post-it-blue {
+  background: linear-gradient(135deg, #81d4fa 0%, #4fc3f7 100%);
+}
+
+.post-it-green {
+  background: linear-gradient(135deg, #aed581 0%, #9ccc65 100%);
+}
+
+.post-it-orange {
+  background: linear-gradient(135deg, #ffcc80 0%, #ffb74d 100%);
+}
+
+/* Legacy support */
 .postit {
   position: relative;
   box-shadow: 
