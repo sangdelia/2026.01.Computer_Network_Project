@@ -32,7 +32,8 @@ export default function Home() {
   useEffect(() => {
     fetch("/api/topics")
       .then((res) => res.json())
-      .then(({ data }) => setTopics(data));
+      .then(({ data }) => setTopics(data ?? []))
+      .catch(() => setTopics([]));
 
     const stored = localStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
@@ -65,7 +66,9 @@ export default function Home() {
       <header className="pt-12 pb-8 text-center relative z-10">
         <h1 className="chalk-text text-6xl font-bold tracking-wide">Daily Issues</h1>
         <p className="chalk-text-dim text-2xl mt-4">- 오늘의 토론 주제 -</p>
-        <div className="chalk-text-dim text-lg mt-2 opacity-60">2026년 4월 9일</div>
+        <div className="chalk-text-dim text-lg mt-2 opacity-60">
+          {new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}
+        </div>
       </header>
 
       <main className="flex justify-center items-center py-8 px-4 relative z-10">

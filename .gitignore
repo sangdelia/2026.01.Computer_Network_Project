@@ -1,6 +1,30 @@
+# Next.js
 .next/
+out/
+
+# Dependencies
 node_modules/
-*.log
+
+# Environment variables
 .env.local
 .env.*.local
+.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Package managers
+pnpm-lock.yaml
+yarn.lock
+
+# Lecture materials & presentation files
+Learning/
+docs/
+
+# Temp
+*.tmp

@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Opinion, Comment, SortType } from "@/lib/types";
-import { ArrowLeft, ThumbsUp, ThumbsDown, MessageCircle, Send, Pencil } from "lucide-react";
+import { ArrowLeft, ThumbsUp, ThumbsDown, MessageCircle, Send, Pencil, Trash2 } from "lucide-react";
 import { formatRelativeTime, calculateAgreeRate, cn } from "@/lib/utils";
 
 // localStorage에서 로그인 유저 읽기
@@ -30,6 +30,7 @@ export default function TopicPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [showWriteModal, setShowWriteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [sort, setSort] = useState<SortType>("latest");
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -43,19 +44,23 @@ export default function TopicPage() {
     fetch("/api/topics")
       .then((res) => res.json())
       .then(({ data }) => {
+        if (!data) return;
         const idx = data.findIndex((t: { id: number }) => t.id === topicId);
         const topic = data[idx >= 0 ? idx : 0];
         setTopicTitle(topic?.title ?? "");
         setTopicColorIndex(idx >= 0 ? idx : 0);
-      });
+      })
+      .catch(() => {});
   }, [topicId]);
 
   // 의견 목록 조회
   const fetchOpinions = useCallback(() => {
-    fetch(`/api/opinions?topicId=${topicId}&sort=${sort}`)
+    const userParam = currentUser ? `&userId=${currentUser.id}` : "";
+    fetch(`/api/opinions?topicId=${topicId}&sort=${sort}${userParam}`)
       .then((res) => res.json())
-      .then(({ data }) => setOpinions(data ?? []));
-  }, [topicId, sort]);
+      .then(({ data }) => setOpinions(data ?? []))
+      .catch(() => setOpinions([]));
+  }, [topicId, sort, currentUser]);
 
   useEffect(() => { fetchOpinions(); }, [fetchOpinions]);
 
@@ -96,7 +101,7 @@ export default function TopicPage() {
     const { data } = await res.json();
     if (data) {
       setSelectedOpinion((prev) => prev ? { ...prev, agreeCount: data.agreeCount, disagreeCount: data.disagreeCount, myReaction: data.myReaction } : prev);
-      setOpinions((prev) => prev.map((o) => o.id === selectedOpinion.id ? { ...o, agreeCount: data.agreeCount, disagreeCount: data.disagreeCount } : o));
+      setOpinions((prev) => prev.map((o) => o.id === selectedOpinion.id ? { ...o, agreeCount: data.agreeCount, disagreeCount: data.disagreeCount, myReaction: data.myReaction } : o));
     }
   };
 
@@ -113,6 +118,51 @@ export default function TopicPage() {
       fetchComments(selectedOpinion.id);
       setSelectedOpinion((prev) => prev ? { ...prev, commentCount: prev.commentCount + 1 } : prev);
       setOpinions((prev) => prev.map((o) => o.id === selectedOpinion.id ? { ...o, commentCount: o.commentCount + 1 } : o));
+    }
+  };
+
+  // 의견 삭제
+  const handleDeleteOpinion = async () => {
+    if (!selectedOpinion || !currentUser) return;
+    if (!confirm("의견을 삭제하시겠습니까?")) return;
+    const res = await fetch(`/api/opinions/${selectedOpinion.id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: currentUser.id }),
+    });
+    if (res.ok) {
+      setSelectedOpinion(null);
+      fetchOpinions();
+    }
+  };
+
+  // 의견 수정
+  const handleEditOpinion = async (summary: string, content: string) => {
+    if (!selectedOpinion || !currentUser) return;
+    const res = await fetch(`/api/opinions/${selectedOpinion.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: currentUser.id, summary, content }),
+    });
+    if (res.ok) {
+      setShowEditModal(false);
+      setSelectedOpinion((prev) => prev ? { ...prev, summary, content } : prev);
+      fetchOpinions();
+    }
+  };
+
+  // 댓글 삭제
+  const handleDeleteComment = async (commentId: number) => {
+    if (!currentUser || !selectedOpinion) return;
+    const res = await fetch(`/api/comments/${commentId}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: currentUser.id }),
+    });
+    if (res.ok) {
+      fetchComments(selectedOpinion.id);
+      setSelectedOpinion((prev) => prev ? { ...prev, commentCount: prev.commentCount - 1 } : prev);
+      setOpinions((prev) => prev.map((o) => o.id === selectedOpinion.id ? { ...o, commentCount: o.commentCount - 1 } : o));
     }
   };
 
@@ -221,9 +271,29 @@ export default function TopicPage() {
             {selectedOpinion ? (
               <div className={cn("post-it flex-1 overflow-y-auto", selectedColor)} style={{ transform: "rotate(0.5deg)" }}>
                 <div className="p-2">
-                  <h2 className="text-xl font-bold text-gray-800 mb-4 pb-3 border-b-2 border-gray-300 border-dashed">
-                    {selectedOpinion.summary}
-                  </h2>
+                  <div className="flex items-start justify-between mb-4 pb-3 border-b-2 border-gray-300 border-dashed">
+                    <h2 className="text-xl font-bold text-gray-800 flex-1 pr-2">
+                      {selectedOpinion.summary}
+                    </h2>
+                    {currentUser && (selectedOpinion as any).authorId === currentUser.id && (
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          onClick={() => setShowEditModal(true)}
+                          className="p-1 text-gray-500 hover:text-blue-600 transition-colors"
+                          title="수정"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={handleDeleteOpinion}
+                          className="p-1 text-gray-500 hover:text-red-600 transition-colors"
+                          title="삭제"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3 text-sm text-gray-600 mb-4">
                     <span className="font-medium">{selectedOpinion.authorNickname}</span>
                     <span>|</span>
@@ -282,6 +352,14 @@ export default function TopicPage() {
                             <span className="text-gray-500 text-xs" suppressHydrationWarning>
                               {isHydrated ? formatRelativeTime(comment.createdAt) : "..."}
                             </span>
+                            {currentUser && (comment as any).authorId === currentUser.id && (
+                              <button
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="ml-auto text-gray-400 hover:text-red-500 transition-colors"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            )}
                           </div>
                           <p className="text-gray-700">{comment.content}</p>
                         </div>
@@ -325,6 +403,86 @@ export default function TopicPage() {
           onSubmit={handleWriteOpinion}
         />
       )}
+      {showEditModal && selectedOpinion && (
+        <EditOpinionModal
+          initialSummary={selectedOpinion.summary}
+          initialContent={selectedOpinion.content}
+          topicTitle={topicTitle}
+          onClose={() => setShowEditModal(false)}
+          onSubmit={handleEditOpinion}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditOpinionModal({
+  initialSummary,
+  initialContent,
+  topicTitle,
+  onClose,
+  onSubmit,
+}: {
+  initialSummary: string;
+  initialContent: string;
+  topicTitle: string;
+  onClose: () => void;
+  onSubmit: (summary: string, content: string) => void;
+}) {
+  const [summary, setSummary] = useState(initialSummary);
+  const [content, setContent] = useState(initialContent);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="post-it post-it-blue w-full max-w-xl mx-4" style={{ transform: "rotate(1deg)" }}>
+        <div className="p-2">
+          <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">Edit Opinion</h2>
+          <p className="text-sm text-gray-600 text-center mb-4">Topic: {topicTitle}</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Summary (10-100 characters)
+              </label>
+              <input
+                type="text"
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                maxLength={100}
+                className="w-full px-3 py-2 border border-gray-300 rounded bg-white/70 text-gray-800"
+              />
+              <span className="text-xs text-gray-500">{summary.length}/100</span>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Opinion (50-5000 characters)
+              </label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                maxLength={5000}
+                rows={8}
+                className="w-full px-3 py-2 border border-gray-300 rounded bg-white/70 text-gray-800 resize-none"
+              />
+              <span className="text-xs text-gray-500">{content.length}/5000</span>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2 border-2 border-gray-400 rounded text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => summary.length >= 10 && content.length >= 50 && onSubmit(summary, content)}
+              disabled={summary.length < 10 || content.length < 50}
+              className="flex-1 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
+  allowedDevOrigins: ["*.trycloudflare.com"],
 }
 
 export default nextConfig

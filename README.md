@@ -1,53 +1,86 @@
-# 온라인 설전 플랫폼 - 목업
+# Daily Issues — 온라인 토론 플랫폼
 
-다양한 주제에 대해 의견을 나누고 공감/비공감 반응과 댓글로 토론하는 온라인 설전 플랫폼의 목업 페이지입니다.
+매일 갱신되는 시사 주제에 의견을 작성하고, 공감·비공감 반응과 댓글로 토론하는 풀스택 웹 서비스입니다.
+
+> 군산대학교 소프트웨어학과 컴퓨터 네트워크 팀 프로젝트 · 2026.04 · 2101018 조규상
+
+---
+
+## 기술 스택
+
+| 계층 | 기술 |
+|------|------|
+| 응용 (L7) | Next.js 15, React 19, Tailwind CSS, REST API |
+| 표현 (L6) | UTF-8 인코딩, JSON 직렬화 |
+| 세션 (L5) | localStorage 기반 사용자 세션 |
+| 전송 (L4) | TCP · mysql2 커넥션 풀 · 포트 3000/3306 |
+| 네트워크 (L3) | IP 라우팅 · Cloudflare Tunnel |
+| 데이터베이스 | MySQL 8.0 |
+
+---
+
+## 주요 기능
+
+- 회원가입 / 로그인 / 로그아웃
+- 의견 작성 · 수정 · 삭제 (본인 게시물에 한함)
+- 의견 정렬 (최신순 · 인기순)
+- 공감 / 비공감 반응 (토글 · 전환 · 자기 게시물 차단)
+- 댓글 작성 / 삭제
+- MySQL 실시간 연동
+- Cloudflare Tunnel 외부 공개
+
+---
 
 ## 프로젝트 구조
 
 ```
 .
-├── app/                      # Next.js 앱 라우터
-│   ├── layout.tsx           # 레이아웃
-│   ├── page.tsx             # 메인 페이지
-│   └── globals.css          # 전역 스타일
-├── components/              # React 컴포넌트
-│   ├── topic-header.tsx     # 주제 헤더
-│   ├── sort-tab.tsx         # 정렬 탭
-│   ├── opinion-card.tsx     # 의견 카드
-│   ├── opinion-list.tsx     # 의견 목록
-│   ├── opinion-detail.tsx   # 의견 상세
-│   ├── reaction-bar.tsx     # 반응 바
-│   ├── comment-item.tsx     # 댓글 항목
-│   ├── comment-list.tsx     # 댓글 목록
-│   ├── comment-input.tsx    # 댓글 입력
-│   ├── write-button.tsx     # 작성 버튼
-│   └── write-modal.tsx      # 작성 모달
+├── app/
+│   ├── api/
+│   │   ├── auth/
+│   │   │   ├── login/route.ts       # 로그인
+│   │   │   └── signup/route.ts      # 회원가입
+│   │   ├── opinions/
+│   │   │   ├── route.ts             # 의견 목록/작성
+│   │   │   └── [id]/
+│   │   │       ├── route.ts         # 의견 수정/삭제
+│   │   │       ├── comments/route.ts  # 댓글 조회/작성
+│   │   │       └── reactions/route.ts # 반응 처리
+│   │   ├── comments/[id]/route.ts   # 댓글 삭제
+│   │   └── topics/route.ts          # 토론 주제 목록
+│   ├── topic/[id]/page.tsx          # 토론 상세 페이지
+│   ├── signup/page.tsx              # 회원가입 페이지
+│   ├── page.tsx                     # 메인 (토론 주제 목록)
+│   ├── layout.tsx
+│   └── globals.css
+├── components/
+│   └── post-it.tsx                  # 포스트잇 컴포넌트
 ├── lib/
-│   ├── types.ts             # 타입 정의
-│   ├── utils.ts             # 유틸 함수
-│   └── mock-data.ts         # 목 데이터
-├── package.json             # 의존성
-├── tailwind.config.ts       # Tailwind 설정
-├── tsconfig.json            # TypeScript 설정
-└── next.config.ts           # Next.js 설정
+│   ├── db.ts                        # MySQL 커넥션 풀
+│   ├── types.ts                     # 타입 정의
+│   └── utils.ts                     # 유틸 함수
+├── docs/
+│   ├── Daily Issues 중간발표.pptx   # 중간발표 자료
+│   └── 발표_예상질문.txt            # 예상 질문 및 답변
+├── next.config.ts
+├── tailwind.config.ts
+└── tsconfig.json
 ```
 
-## 주요 기능
+---
 
-- **의견 목록 화면**: 왼쪽에 의견 요약 카드 목록 표시
-- **의견 상세 화면**: 오른쪽에 선택된 의견의 전문, 반응, 댓글 표시
-- **정렬 기능**: 최신순/인기순 전환
-- **반응 시스템**: 공감/비공감 버튼 및 공감률 표시
-- **댓글 기능**: 의견에 대한 댓글 작성 및 표시
-- **의견 작성**: 플로팅 버튼을 통한 새로운 의견 작성
+## 데이터베이스 스키마
 
-## 기술 스택
+```sql
+users      : id, email, password, nickname
+topics     : id, title, created_at
+opinions   : id, topic_id, author_id, summary, content,
+             agree_count, disagree_count, comment_count
+comments   : id, opinion_id, author_id, content, created_at
+reactions  : opinion_id + user_id (UNIQUE), type (AGREE/DISAGREE)
+```
 
-- **Framework**: Next.js 16
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **Package Manager**: npm
+---
 
 ## 설치 및 실행
 
@@ -55,18 +88,34 @@
 # 의존성 설치
 npm install
 
+# 환경변수 설정 (.env.local)
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=debate_platform
+
 # 개발 서버 실행
 npm run dev
-
-# 프로덕션 빌드
-npm run build
-npm start
 ```
 
-## 배포
+### 외부 공개 (Cloudflare Tunnel)
 
-이 프로젝트는 Vercel에서 자동으로 배포됩니다. 메인 브랜치로 푸시하면 자동 배포가 트리거됩니다.
+```bash
+# 설치 (최초 1회)
+winget install --id Cloudflare.cloudflared
 
-## 라이선스
+# 터널 실행
+cloudflared tunnel --url http://localhost:3000
+```
 
-이 프로젝트는 비공개 프로젝트입니다.
+---
+
+## 향후 계획
+
+- JWT 인증 + bcrypt 비밀번호 해싱
+- 반응형 웹 (모바일·태블릿 대응)
+- 비로그인 접근 제한
+- WebSocket 실시간 알림
+- PM2 상시 운영
+- AI 토론 주제 자동 생성

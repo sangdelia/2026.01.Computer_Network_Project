@@ -5,6 +5,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const topicId = searchParams.get("topicId");
   const sort = searchParams.get("sort") || "latest";
+  const userId = searchParams.get("userId") ?? null;
 
   if (!topicId) {
     return NextResponse.json({ success: false, error: { code: "MISSING_TOPIC_ID", message: "topicId가 필요합니다." } }, { status: 400 });
@@ -13,14 +14,18 @@ export async function GET(req: NextRequest) {
   const orderBy = sort === "popular" ? "o.agree_count DESC" : "o.created_at DESC";
 
   const [rows] = await execute(
-    `SELECT o.id, o.summary, u.nickname AS authorNickname,
+    `SELECT o.id, o.topic_id AS topicId, o.author_id AS authorId,
+            u.nickname AS authorNickname, o.summary, o.content,
             o.agree_count AS agreeCount, o.disagree_count AS disagreeCount,
-            o.comment_count AS commentCount, o.created_at AS createdAt
+            o.comment_count AS commentCount, o.created_at AS createdAt,
+            o.updated_at AS updatedAt,
+            r.type AS myReaction
      FROM opinions o
      JOIN users u ON o.author_id = u.id
+     LEFT JOIN reactions r ON r.opinion_id = o.id AND r.user_id = ?
      WHERE o.topic_id = ?
      ORDER BY ${orderBy}`,
-    [topicId]
+    [userId, topicId]
   );
 
   return NextResponse.json({ success: true, data: rows });
