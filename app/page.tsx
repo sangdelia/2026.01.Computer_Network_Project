@@ -7,6 +7,7 @@ import { PostIt } from "@/components/post-it";
 interface TopicWithCount {
   id: number;
   title: string;
+  isActive: boolean;
   createdAt: string;
   opinionCount: number;
 }
@@ -25,6 +26,7 @@ const postItRotations = [-3, 2, -1, 3, -2];
 export default function Home() {
   const router = useRouter();
   const [topics, setTopics] = useState<TopicWithCount[]>([]);
+  const [showArchive, setShowArchive] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [loginError, setLoginError] = useState("");
@@ -73,9 +75,10 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="flex-1 flex justify-center items-center py-6 md:py-8 px-4 relative z-10">
-        <div className="flex flex-wrap justify-center gap-6 md:gap-8 max-w-4xl">
-          {topics.map((topic, index) => (
+      <main className="flex-1 flex flex-col items-center py-6 md:py-8 px-4 relative z-10">
+        {/* 오늘의 토론 주제 */}
+        <div className="flex flex-wrap justify-center gap-6 md:gap-8 max-w-4xl w-full">
+          {topics.filter((t) => t.isActive).map((topic, index) => (
             <PostIt
               key={topic.id}
               title={topic.title}
@@ -86,6 +89,33 @@ export default function Home() {
             />
           ))}
         </div>
+
+        {/* 지난 토론 아카이브 */}
+        {topics.some((t) => !t.isActive) && (
+          <div className="mt-10 w-full max-w-2xl relative z-10">
+            <button
+              onClick={() => setShowArchive((v) => !v)}
+              className="chalk-text-dim text-lg opacity-70 hover:opacity-100 transition-opacity w-full text-center"
+            >
+              {showArchive ? "▲" : "▼"} 지난 토론 보기 ({topics.filter((t) => !t.isActive).length}개)
+            </button>
+            {showArchive && (
+              <ul className="mt-3 space-y-2">
+                {topics.filter((t) => !t.isActive).map((topic) => (
+                  <li key={topic.id}>
+                    <button
+                      onClick={() => router.push(`/topic/${topic.id}`)}
+                      className="chalk-text-dim text-base opacity-60 hover:opacity-90 transition-opacity w-full text-left px-2 py-1 truncate"
+                    >
+                      · {topic.title}
+                      <span className="ml-2 text-sm opacity-60">({Number(topic.opinionCount)}개 의견)</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </main>
 
       <div className="hidden md:block absolute top-20 left-8 chalk-text-dim text-4xl opacity-30 rotate-12">*</div>

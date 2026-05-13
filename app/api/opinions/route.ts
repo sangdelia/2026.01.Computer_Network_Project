@@ -41,6 +41,14 @@ export async function POST(req: NextRequest) {
 
   const { topicId, summary, content } = await req.json();
 
+  const [topicRows] = await execute("SELECT is_active FROM topics WHERE id = ?", [topicId]) as any;
+  if (!topicRows.length) {
+    return NextResponse.json({ success: false, error: { code: "TOPIC_NOT_FOUND", message: "주제를 찾을 수 없습니다." } }, { status: 404 });
+  }
+  if (!topicRows[0].is_active) {
+    return NextResponse.json({ success: false, error: { code: "TOPIC_CLOSED", message: "종료된 토론에는 의견을 작성할 수 없습니다." } }, { status: 403 });
+  }
+
   if (!summary || summary.length < 10 || summary.length > 100) {
     return NextResponse.json({ success: false, error: { code: "INVALID_SUMMARY_LENGTH", message: "요약문은 10~100자여야 합니다." } }, { status: 400 });
   }

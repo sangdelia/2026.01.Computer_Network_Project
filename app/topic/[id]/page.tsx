@@ -18,6 +18,7 @@ export default function TopicPage() {
   const [currentUser, setCurrentUser] = useState<{ id: number; nickname: string } | null>(null);
   const [topicTitle, setTopicTitle] = useState("");
   const [topicColorIndex, setTopicColorIndex] = useState(0);
+  const [topicIsActive, setTopicIsActive] = useState(true);
   const [opinions, setOpinions] = useState<Opinion[]>([]);
   const [selectedOpinion, setSelectedOpinion] = useState<Opinion | null>(null);
   const [selectedColor, setSelectedColor] = useState(POST_IT_COLORS[0]);
@@ -47,6 +48,7 @@ export default function TopicPage() {
         const topic = data[idx >= 0 ? idx : 0];
         setTopicTitle(topic?.title ?? "");
         setTopicColorIndex(idx >= 0 ? idx : 0);
+        setTopicIsActive(!!topic?.isActive);
       })
       .catch(() => {});
   }, [topicId]);
@@ -268,7 +270,11 @@ export default function TopicPage() {
               ))}
             </div>
 
-            {currentUser ? (
+            {!topicIsActive ? (
+              <p className="chalk-text text-center mt-4 opacity-50 text-lg">
+                종료된 토론입니다 — 읽기만 가능합니다
+              </p>
+            ) : currentUser ? (
               <button
                 onClick={() => setShowWriteModal(true)}
                 className="chalk-button mt-4 flex items-center justify-center gap-2"
@@ -326,12 +332,12 @@ export default function TopicPage() {
                   <div className="flex items-center gap-4 py-4 border-t-2 border-b-2 border-gray-300 border-dashed">
                     <button
                       onClick={() => handleReact("AGREE")}
-                      disabled={!currentUser}
-                      title={!currentUser ? "로그인이 필요합니다" : undefined}
+                      disabled={!currentUser || !topicIsActive}
+                      title={!topicIsActive ? "종료된 토론입니다" : !currentUser ? "로그인이 필요합니다" : undefined}
                       className={cn(
                         "flex items-center gap-2 px-4 py-2 rounded-full transition-colors",
-                        !currentUser && "opacity-40 cursor-not-allowed",
-                        currentUser && selectedOpinion.myReaction === "AGREE"
+                        (!currentUser || !topicIsActive) && "opacity-40 cursor-not-allowed",
+                        currentUser && topicIsActive && selectedOpinion.myReaction === "AGREE"
                           ? "bg-blue-400 text-white"
                           : "bg-blue-100 hover:bg-blue-200 text-blue-600"
                       )}
@@ -341,12 +347,12 @@ export default function TopicPage() {
                     </button>
                     <button
                       onClick={() => handleReact("DISAGREE")}
-                      disabled={!currentUser}
-                      title={!currentUser ? "로그인이 필요합니다" : undefined}
+                      disabled={!currentUser || !topicIsActive}
+                      title={!topicIsActive ? "종료된 토론입니다" : !currentUser ? "로그인이 필요합니다" : undefined}
                       className={cn(
                         "flex items-center gap-2 px-4 py-2 rounded-full transition-colors",
-                        !currentUser && "opacity-40 cursor-not-allowed",
-                        currentUser && selectedOpinion.myReaction === "DISAGREE"
+                        (!currentUser || !topicIsActive) && "opacity-40 cursor-not-allowed",
+                        currentUser && topicIsActive && selectedOpinion.myReaction === "DISAGREE"
                           ? "bg-red-400 text-white"
                           : "bg-red-100 hover:bg-red-200 text-red-600"
                       )}
@@ -388,7 +394,7 @@ export default function TopicPage() {
                         </div>
                       ))}
                     </div>
-                    {currentUser ? (
+                    {currentUser && topicIsActive ? (
                       <div className="flex gap-2 mt-3">
                         <input
                           type="text"
@@ -407,7 +413,7 @@ export default function TopicPage() {
                       </div>
                     ) : (
                       <p className="text-sm text-gray-500 mt-3 text-center">
-                        로그인 후 댓글을 작성할 수 있습니다
+                        {!topicIsActive ? "종료된 토론입니다" : "로그인 후 댓글을 작성할 수 있습니다"}
                       </p>
                     )}
                   </div>
