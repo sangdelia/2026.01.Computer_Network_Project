@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { execute } from "@/lib/db";
+import { getUser } from "@/lib/auth";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getUser();
+  if (!user) return NextResponse.json({ success: false, error: { code: "UNAUTHORIZED", message: "로그인이 필요합니다." } }, { status: 401 });
+
   const { id } = await params;
   const opinionId = Number(id);
-  const { userId, type } = await req.json();
+  const { type } = await req.json();
+  const userId = user.id;
 
   if (type !== "AGREE" && type !== "DISAGREE") {
     return NextResponse.json({ success: false, error: { code: "INVALID_REACTION_TYPE", message: "반응 타입이 올바르지 않습니다." } }, { status: 400 });

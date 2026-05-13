@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { execute } from "@/lib/db";
+import { getUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const topicId = searchParams.get("topicId");
   const sort = searchParams.get("sort") || "latest";
-  const userId = searchParams.get("userId") ?? null;
+  const user = await getUser();
+  const userId = user?.id ?? null;
 
   if (!topicId) {
     return NextResponse.json({ success: false, error: { code: "MISSING_TOPIC_ID", message: "topicId가 필요합니다." } }, { status: 400 });
@@ -32,8 +34,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { topicId, authorId, summary, content } = body;
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ success: false, error: { code: "UNAUTHORIZED", message: "로그인이 필요합니다." } }, { status: 401 });
+  }
+
+  const { topicId, summary, content } = await req.json();
 
   if (!summary || summary.length < 10 || summary.length > 100) {
     return NextResponse.json({ success: false, error: { code: "INVALID_SUMMARY_LENGTH", message: "요약문은 10~100자여야 합니다." } }, { status: 400 });
@@ -44,7 +50,7 @@ export async function POST(req: NextRequest) {
 
   const [result] = await execute(
     "INSERT INTO opinions (topic_id, author_id, summary, content) VALUES (?, ?, ?, ?)",
-    [topicId, authorId, summary, content]
+    [topicId, user.id, summary, content]
   ) as any;
 
   return NextResponse.json({ success: true, data: { id: result.insertId } }, { status: 201 });

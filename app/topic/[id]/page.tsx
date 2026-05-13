@@ -6,12 +6,6 @@ import { Opinion, Comment, SortType } from "@/lib/types";
 import { ArrowLeft, ThumbsUp, ThumbsDown, MessageCircle, Send, Pencil, Trash2 } from "lucide-react";
 import { formatRelativeTime, calculateAgreeRate, cn } from "@/lib/utils";
 
-// localStorage에서 로그인 유저 읽기
-function getStoredUser(): { id: number; nickname: string } | null {
-  if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem("user");
-  return stored ? JSON.parse(stored) : null;
-}
 
 const POST_IT_COLORS = ["post-it-yellow", "post-it-pink", "post-it-blue", "post-it-green", "post-it-orange"];
 const ROTATIONS = [-2, 1, -1, 2, -1.5];
@@ -33,10 +27,14 @@ export default function TopicPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [sort, setSort] = useState<SortType>("latest");
   const [isHydrated, setIsHydrated] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"list" | "detail">("list");
 
   useEffect(() => {
     setIsHydrated(true);
-    setCurrentUser(getStoredUser());
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then(({ success, data }) => { if (success) setCurrentUser(data); })
+      .catch(() => {});
   }, []);
 
   // 주제 정보 + 색상 인덱스
@@ -55,12 +53,11 @@ export default function TopicPage() {
 
   // 의견 목록 조회
   const fetchOpinions = useCallback(() => {
-    const userParam = currentUser ? `&userId=${currentUser.id}` : "";
-    fetch(`/api/opinions?topicId=${topicId}&sort=${sort}${userParam}`)
+    fetch(`/api/opinions?topicId=${topicId}&sort=${sort}`)
       .then((res) => res.json())
       .then(({ data }) => setOpinions(data ?? []))
       .catch(() => setOpinions([]));
-  }, [topicId, sort, currentUser]);
+  }, [topicId, sort]);
 
   useEffect(() => { fetchOpinions(); }, [fetchOpinions]);
 
@@ -88,6 +85,7 @@ export default function TopicPage() {
     setSelectedColor(POST_IT_COLORS[index % POST_IT_COLORS.length]);
     fetchComments(opinion.id);
     setNewComment("");
+    setMobileTab("detail");
   };
 
   // 반응 (공감/비공감)
@@ -96,7 +94,7 @@ export default function TopicPage() {
     const res = await fetch(`/api/opinions/${selectedOpinion.id}/reactions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: currentUser.id, type }),
+      body: JSON.stringify({ type }),
     });
     const { data } = await res.json();
     if (data) {
@@ -111,7 +109,7 @@ export default function TopicPage() {
     const res = await fetch(`/api/opinions/${selectedOpinion.id}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: currentUser.id, content: newComment }),
+      body: JSON.stringify({ content: newComment }),
     });
     if (res.ok) {
       setNewComment("");
@@ -127,8 +125,6 @@ export default function TopicPage() {
     if (!confirm("의견을 삭제하시겠습니까?")) return;
     const res = await fetch(`/api/opinions/${selectedOpinion.id}`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: currentUser.id }),
     });
     if (res.ok) {
       setSelectedOpinion(null);
@@ -142,7 +138,7 @@ export default function TopicPage() {
     const res = await fetch(`/api/opinions/${selectedOpinion.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: currentUser.id, summary, content }),
+      body: JSON.stringify({ summary, content }),
     });
     if (res.ok) {
       setShowEditModal(false);
@@ -156,8 +152,6 @@ export default function TopicPage() {
     if (!currentUser || !selectedOpinion) return;
     const res = await fetch(`/api/comments/${commentId}`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: currentUser.id }),
     });
     if (res.ok) {
       fetchComments(selectedOpinion.id);
@@ -172,7 +166,7 @@ export default function TopicPage() {
     const res = await fetch("/api/opinions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topicId, authorId: currentUser.id, summary, content }),
+      body: JSON.stringify({ topicId, summary, content }),
     });
     if (res.ok) {
       setShowWriteModal(false);
@@ -182,35 +176,52 @@ export default function TopicPage() {
 
   return (
     <div className="chalkboard min-h-screen">
-      <div className="chalkboard-inner min-h-screen p-6">
+      <div className="chalkboard-inner min-h-screen p-3 md:p-6 flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
           <button
             onClick={() => router.push("/")}
-            className="chalk-text flex items-center gap-2 text-2xl hover:opacity-80 transition-opacity font-medium"
+            className="chalk-text flex items-center gap-1 md:gap-2 text-lg md:text-2xl hover:opacity-80 transition-opacity font-medium"
           >
-            <ArrowLeft className="h-7 w-7" />
-            <span>Back to Board</span>
+            <ArrowLeft className="h-5 w-5 md:h-7 md:w-7" />
+            <span className="hidden sm:inline">Back to Board</span>
+            <span className="sm:hidden">Back</span>
           </button>
-          <div className="chalk-text text-4xl text-center flex-1 font-bold">
+          <div className="chalk-text text-xl md:text-4xl text-center flex-1 font-bold px-2">
             - Daily Issue #{topicId} -
           </div>
-          <div className="w-32" />
+          <div className="w-16 md:w-32" />
         </div>
 
         {/* Topic Title */}
-        <div className="flex justify-center mb-8">
-          <div className={cn("post-it w-full max-w-2xl p-6", topicColor)} style={{ transform: "rotate(-1deg)" }}>
-            <h1 className="text-2xl font-bold text-center text-gray-800 leading-relaxed">
+        <div className="flex justify-center mb-4 md:mb-8">
+          <div className={cn("post-it w-full max-w-2xl p-3 md:p-6", topicColor)} style={{ transform: "rotate(-1deg)" }}>
+            <h1 className="text-lg md:text-2xl font-bold text-center text-gray-800 leading-relaxed">
               {topicTitle}
             </h1>
           </div>
         </div>
 
+        {/* Mobile Tabs */}
+        <div className="flex md:hidden mb-3 border-b-2 border-white/20">
+          <button
+            onClick={() => setMobileTab("list")}
+            className={cn("flex-1 py-2 chalk-text text-lg transition-opacity", mobileTab === "list" ? "opacity-100 border-b-2 border-white" : "opacity-50")}
+          >
+            의견 목록
+          </button>
+          <button
+            onClick={() => setMobileTab("detail")}
+            className={cn("flex-1 py-2 chalk-text text-lg transition-opacity", mobileTab === "detail" ? "opacity-100 border-b-2 border-white" : "opacity-50")}
+          >
+            의견 상세
+          </button>
+        </div>
+
         {/* Main Content */}
-        <div className="flex gap-6 h-[calc(100vh-280px)]">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6 flex-1 min-h-0">
           {/* Left: Opinion List */}
-          <div className="w-1/2 flex flex-col">
+          <div className={cn("md:w-1/2 flex-col min-h-0", mobileTab === "list" ? "flex flex-1" : "hidden md:flex")}>
             <div className="flex gap-4 mb-4">
               <button
                 onClick={() => setSort("latest")}
@@ -257,17 +268,23 @@ export default function TopicPage() {
               ))}
             </div>
 
-            <button
-              onClick={() => setShowWriteModal(true)}
-              className="chalk-button mt-4 flex items-center justify-center gap-2"
-            >
-              <Pencil className="h-5 w-5" />
-              Write Opinion
-            </button>
+            {currentUser ? (
+              <button
+                onClick={() => setShowWriteModal(true)}
+                className="chalk-button mt-4 flex items-center justify-center gap-2"
+              >
+                <Pencil className="h-5 w-5" />
+                Write Opinion
+              </button>
+            ) : (
+              <p className="chalk-text text-center mt-4 opacity-50 text-lg">
+                로그인 후 의견을 작성할 수 있습니다
+              </p>
+            )}
           </div>
 
           {/* Right: Opinion Detail */}
-          <div className="w-1/2 flex flex-col">
+          <div className={cn("md:w-1/2 flex-col min-h-0", mobileTab === "detail" ? "flex flex-1" : "hidden md:flex")}>
             {selectedOpinion ? (
               <div className={cn("post-it flex-1 overflow-y-auto", selectedColor)} style={{ transform: "rotate(0.5deg)" }}>
                 <div className="p-2">
@@ -309,9 +326,12 @@ export default function TopicPage() {
                   <div className="flex items-center gap-4 py-4 border-t-2 border-b-2 border-gray-300 border-dashed">
                     <button
                       onClick={() => handleReact("AGREE")}
+                      disabled={!currentUser}
+                      title={!currentUser ? "로그인이 필요합니다" : undefined}
                       className={cn(
                         "flex items-center gap-2 px-4 py-2 rounded-full transition-colors",
-                        selectedOpinion.myReaction === "AGREE"
+                        !currentUser && "opacity-40 cursor-not-allowed",
+                        currentUser && selectedOpinion.myReaction === "AGREE"
                           ? "bg-blue-400 text-white"
                           : "bg-blue-100 hover:bg-blue-200 text-blue-600"
                       )}
@@ -321,9 +341,12 @@ export default function TopicPage() {
                     </button>
                     <button
                       onClick={() => handleReact("DISAGREE")}
+                      disabled={!currentUser}
+                      title={!currentUser ? "로그인이 필요합니다" : undefined}
                       className={cn(
                         "flex items-center gap-2 px-4 py-2 rounded-full transition-colors",
-                        selectedOpinion.myReaction === "DISAGREE"
+                        !currentUser && "opacity-40 cursor-not-allowed",
+                        currentUser && selectedOpinion.myReaction === "DISAGREE"
                           ? "bg-red-400 text-white"
                           : "bg-red-100 hover:bg-red-200 text-red-600"
                       )}
@@ -365,22 +388,28 @@ export default function TopicPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="flex gap-2 mt-3">
-                      <input
-                        type="text"
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
-                        placeholder="Add a comment..."
-                        className="flex-1 px-3 py-2 rounded bg-white/70 border border-gray-300 text-sm text-gray-800 placeholder-gray-500"
-                      />
-                      <button
-                        onClick={handleSubmitComment}
-                        className="px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
-                      >
-                        <Send className="h-4 w-4" />
-                      </button>
-                    </div>
+                    {currentUser ? (
+                      <div className="flex gap-2 mt-3">
+                        <input
+                          type="text"
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
+                          placeholder="Add a comment..."
+                          className="flex-1 px-3 py-2 rounded bg-white/70 border border-gray-300 text-sm text-gray-800 placeholder-gray-500"
+                        />
+                        <button
+                          onClick={handleSubmitComment}
+                          className="px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
+                        >
+                          <Send className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 mt-3 text-center">
+                        로그인 후 댓글을 작성할 수 있습니다
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -35,8 +35,10 @@ export default function Home() {
       .then(({ data }) => setTopics(data ?? []))
       .catch(() => setTopics([]));
 
-    const stored = localStorage.getItem("user");
-    if (stored) setUser(JSON.parse(stored));
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then(({ success, data }) => { if (success) setUser(data); })
+      .catch(() => {});
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -49,30 +51,30 @@ export default function Home() {
     });
     const { success, data, error } = await res.json();
     if (success) {
-      localStorage.setItem("user", JSON.stringify(data));
       setUser(data);
     } else {
       setLoginError(error?.message ?? "로그인 실패");
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
   };
 
+
   return (
-    <div className="min-h-screen chalkboard wooden-frame relative overflow-hidden">
-      <header className="pt-12 pb-8 text-center relative z-10">
-        <h1 className="chalk-text text-6xl font-bold tracking-wide">Daily Issues</h1>
-        <p className="chalk-text-dim text-2xl mt-4">- 오늘의 토론 주제 -</p>
-        <div className="chalk-text-dim text-lg mt-2 opacity-60">
+    <div className="min-h-screen chalkboard wooden-frame relative overflow-y-auto md:overflow-hidden flex flex-col">
+      <header className="pt-8 md:pt-12 pb-6 md:pb-8 text-center relative z-10">
+        <h1 className="chalk-text text-4xl md:text-6xl font-bold tracking-wide">Daily Issues</h1>
+        <p className="chalk-text-dim text-xl md:text-2xl mt-3 md:mt-4">- 오늘의 토론 주제 -</p>
+        <div className="chalk-text-dim text-base md:text-lg mt-2 opacity-60">
           {new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}
         </div>
       </header>
 
-      <main className="flex justify-center items-center py-8 px-4 relative z-10">
-        <div className="flex flex-wrap justify-center gap-8 max-w-4xl">
+      <main className="flex-1 flex justify-center items-center py-6 md:py-8 px-4 relative z-10">
+        <div className="flex flex-wrap justify-center gap-6 md:gap-8 max-w-4xl">
           {topics.map((topic, index) => (
             <PostIt
               key={topic.id}
@@ -86,35 +88,35 @@ export default function Home() {
         </div>
       </main>
 
-      <div className="absolute top-20 left-8 chalk-text-dim text-4xl opacity-30 rotate-12">*</div>
-      <div className="absolute top-40 right-16 chalk-text-dim text-3xl opacity-20 -rotate-6">~</div>
-      <div className="absolute bottom-40 left-16 chalk-text-dim text-5xl opacity-25 rotate-45">+</div>
+      <div className="hidden md:block absolute top-20 left-8 chalk-text-dim text-4xl opacity-30 rotate-12">*</div>
+      <div className="hidden md:block absolute top-40 right-16 chalk-text-dim text-3xl opacity-20 -rotate-6">~</div>
+      <div className="hidden md:block absolute bottom-40 left-16 chalk-text-dim text-5xl opacity-25 rotate-45">+</div>
 
-      {/* 로그인 / 유저 정보 */}
-      <div className="absolute bottom-8 right-8">
+      {/* 로그인 / 유저 정보 - 모바일: 하단 인라인, 데스크탑: 절대 위치 */}
+      <div className="relative md:absolute md:bottom-8 md:right-8 z-10 px-4 pb-6 md:p-0 flex justify-end md:block">
         {user ? (
           <div className="chalk-text text-xl text-right">
             <p className="mb-2">Welcome, {user.nickname}!</p>
             <button onClick={handleLogout} className="chalk-button text-base">Logout</button>
           </div>
         ) : (
-          <form onSubmit={handleLogin} className="flex flex-col gap-2 items-end">
+          <form onSubmit={handleLogin} className="flex flex-col gap-2 items-end w-48">
             <input
               type="text"
               placeholder="ID"
               value={loginForm.username}
               onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
-              className="chalk-input text-lg w-48"
+              className="chalk-input text-lg w-full"
             />
             <input
               type="password"
               placeholder="Password"
               value={loginForm.password}
               onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-              className="chalk-input text-lg w-48"
+              className="chalk-input text-lg w-full"
             />
             {loginError && <p className="chalk-text text-sm text-red-300">{loginError}</p>}
-            <button type="submit" className="chalk-button text-base w-48">Login</button>
+            <button type="submit" className="chalk-button text-base w-full">Login</button>
             <button
               type="button"
               onClick={() => router.push("/signup")}
@@ -126,7 +128,7 @@ export default function Home() {
         )}
       </div>
 
-      <div className="absolute bottom-8 left-8 chalk-text-dim text-lg opacity-70 max-w-xs">
+      <div className="hidden md:block absolute bottom-8 left-8 chalk-text-dim text-lg opacity-70 max-w-xs">
         <p>* 포스트잇을 클릭하면</p>
         <p className="ml-4">토론에 참여할 수 있습니다</p>
       </div>

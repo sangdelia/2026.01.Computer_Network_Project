@@ -46,7 +46,6 @@ export default function SignupPage() {
     setIsSubmitting(false);
 
     if (success) {
-      localStorage.setItem("user", JSON.stringify(data));
       router.push("/");
     } else {
       setErrorMsg(error?.message ?? "회원가입에 실패했습니다.");

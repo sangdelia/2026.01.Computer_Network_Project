@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { execute } from "@/lib/db";
+import { getUser } from "@/lib/auth";
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getUser();
+  if (!user) return NextResponse.json({ success: false, error: { code: "UNAUTHORIZED", message: "로그인이 필요합니다." } }, { status: 401 });
+
   const { id } = await params;
   const commentId = Number(id);
-  const { userId } = await req.json();
+  const userId = user.id;
 
   const [rows] = await execute(
     "SELECT author_id, opinion_id FROM comments WHERE id = ?",
