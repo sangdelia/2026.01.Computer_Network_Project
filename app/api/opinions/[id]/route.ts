@@ -60,7 +60,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!rows.length) {
     return NextResponse.json({ success: false, error: { code: "OPINION_NOT_FOUND", message: "의견을 찾을 수 없습니다." } }, { status: 404 });
   }
-  if (rows[0].author_id !== user.id) {
+  if (rows[0].author_id !== user.id && !user.isAdmin) {
     return NextResponse.json({ success: false, error: { code: "FORBIDDEN", message: "권한이 없습니다." } }, { status: 403 });
   }
 

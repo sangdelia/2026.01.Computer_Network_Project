@@ -47,7 +47,7 @@ export default function TopicPage() {
         const idx = data.findIndex((t: { id: number }) => t.id === topicId);
         const topic = data[idx >= 0 ? idx : 0];
         setTopicTitle(topic?.title ?? "");
-        setTopicColorIndex(idx >= 0 ? idx : 0);
+        setTopicColorIndex(topic ? topic.id % POST_IT_COLORS.length : 0);
         setTopicIsActive(!!topic?.isActive);
       })
       .catch(() => {});
@@ -197,7 +197,12 @@ export default function TopicPage() {
 
         {/* Topic Title */}
         <div className="flex justify-center mb-4 md:mb-8">
-          <div className={cn("post-it w-full max-w-2xl p-3 md:p-6", topicColor)} style={{ transform: "rotate(-1deg)" }}>
+          <div className={cn("post-it w-full max-w-2xl p-3 md:p-6 relative", topicColor)} style={{ transform: "rotate(-1deg)" }}>
+            {!topicIsActive && (
+              <span className="absolute top-2 right-2 text-xs bg-gray-800/60 text-white px-2 py-0.5 rounded-full">
+                종료된 토론
+              </span>
+            )}
             <h1 className="text-lg md:text-2xl font-bold text-center text-gray-800 leading-relaxed">
               {topicTitle}
             </h1>
@@ -298,7 +303,7 @@ export default function TopicPage() {
                     <h2 className="text-xl font-bold text-gray-800 flex-1 pr-2">
                       {selectedOpinion.summary}
                     </h2>
-                    {currentUser && (selectedOpinion as any).authorId === currentUser.id && (
+                    {currentUser && ((selectedOpinion as any).authorId === currentUser.id || (currentUser as any).isAdmin) && (
                       <div className="flex gap-1 shrink-0">
                         <button
                           onClick={() => setShowEditModal(true)}
@@ -381,7 +386,7 @@ export default function TopicPage() {
                             <span className="text-gray-500 text-xs" suppressHydrationWarning>
                               {isHydrated ? formatRelativeTime(comment.createdAt) : "..."}
                             </span>
-                            {currentUser && (comment as any).authorId === currentUser.id && (
+                            {currentUser && ((comment as any).authorId === currentUser.id || (currentUser as any).isAdmin) && (
                               <button
                                 onClick={() => handleDeleteComment(comment.id)}
                                 className="ml-auto text-gray-400 hover:text-red-500 transition-colors"

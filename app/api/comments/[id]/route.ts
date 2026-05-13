@@ -18,7 +18,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!rows.length) {
     return NextResponse.json({ success: false, error: { code: "COMMENT_NOT_FOUND", message: "댓글을 찾을 수 없습니다." } }, { status: 404 });
   }
-  if (rows[0].author_id !== userId) {
+  if (rows[0].author_id !== userId && !user.isAdmin) {
     return NextResponse.json({ success: false, error: { code: "FORBIDDEN", message: "권한이 없습니다." } }, { status: 403 });
   }
 

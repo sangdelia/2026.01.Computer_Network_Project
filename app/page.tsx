@@ -16,6 +16,7 @@ interface User {
   id: number;
   nickname: string;
   email: string;
+  isAdmin?: boolean;
 }
 
 const postItColors: Array<"yellow" | "pink" | "blue" | "green" | "orange"> = [
@@ -27,6 +28,8 @@ export default function Home() {
   const router = useRouter();
   const [topics, setTopics] = useState<TopicWithCount[]>([]);
   const [showArchive, setShowArchive] = useState(false);
+  const [adminTitle, setAdminTitle] = useState("");
+  const [adminMsg, setAdminMsg] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [loginError, setLoginError] = useState("");
@@ -62,6 +65,23 @@ export default function Home() {
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
+  };
+
+  const refreshTopics = () =>
+    fetch("/api/topics").then((r) => r.json()).then(({ data }) => setTopics(data ?? []));
+
+  const handleAdminAddTopic = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminTitle.trim()) return;
+    const res = await fetch("/api/admin/topics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: adminTitle }),
+    });
+    const { success, error } = await res.json();
+    setAdminMsg(success ? `✓ "${adminTitle}" 추가됨` : (error?.message ?? "실패"));
+    if (success) { setAdminTitle(""); refreshTopics(); }
+    setTimeout(() => setAdminMsg(""), 3000);
   };
 
 
@@ -105,10 +125,13 @@ export default function Home() {
                   <li key={topic.id}>
                     <button
                       onClick={() => router.push(`/topic/${topic.id}`)}
-                      className="chalk-text-dim text-base opacity-60 hover:opacity-90 transition-opacity w-full text-left px-2 py-1 truncate"
+                      className="chalk-text-dim text-base opacity-60 hover:opacity-90 transition-opacity w-full text-left px-2 py-1"
                     >
-                      · {topic.title}
-                      <span className="ml-2 text-sm opacity-60">({Number(topic.opinionCount)}개 의견)</span>
+                      <span className="truncate block">· {topic.title}</span>
+                      <span className="text-xs opacity-50 ml-3">
+                        {new Date(topic.createdAt).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}
+                        {" "}· {Number(topic.opinionCount)}개 의견
+                      </span>
                     </button>
                   </li>
                 ))}
@@ -125,9 +148,27 @@ export default function Home() {
       {/* 로그인 / 유저 정보 - 모바일: 하단 인라인, 데스크탑: 절대 위치 */}
       <div className="relative md:absolute md:bottom-8 md:right-8 z-10 px-4 pb-6 md:p-0 flex justify-end md:block">
         {user ? (
-          <div className="chalk-text text-xl text-right">
-            <p className="mb-2">Welcome, {user.nickname}!</p>
-            <button onClick={handleLogout} className="chalk-button text-base">Logout</button>
+          <div className="chalk-text text-xl text-right space-y-2">
+            <p className="mb-1">
+              Welcome, {user.nickname}!
+              {user.isAdmin && <span className="ml-2 text-sm bg-white/20 px-2 py-0.5 rounded">관리자</span>}
+            </p>
+            <button onClick={() => router.push("/mypage")} className="chalk-button text-base w-full">My Page</button>
+            <button onClick={handleLogout} className="chalk-button text-base w-full">Logout</button>
+            {user.isAdmin && (
+              <form onSubmit={handleAdminAddTopic} className="mt-3 space-y-1">
+                <p className="text-sm opacity-60">— 주제 추가 —</p>
+                <input
+                  type="text"
+                  value={adminTitle}
+                  onChange={(e) => setAdminTitle(e.target.value)}
+                  placeholder="새 주제 입력..."
+                  className="chalk-input text-sm w-full"
+                />
+                <button type="submit" className="chalk-button text-sm w-full">추가</button>
+                {adminMsg && <p className="text-sm opacity-70">{adminMsg}</p>}
+              </form>
+            )}
           </div>
         ) : (
           <form onSubmit={handleLogin} className="flex flex-col gap-2 items-end w-48">
